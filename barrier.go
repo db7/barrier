@@ -66,12 +66,12 @@ func (b *Barrier) Await(cb Callback) error {
 		return ErrBarrierMisused
 	}
 
-	// wait for others and callback execution
+	// wait for others and for callback execution to finish
 	if count > 0 {
 		return b.wait(done)
 	}
 
-	// if count == 0 execute callback if last goroutine
+	// execute callback if last goroutine
 	var err error
 	if cb != nil {
 		err = cb()
@@ -94,6 +94,11 @@ func (b *Barrier) aborted() bool {
 func (b *Barrier) wait(done chan bool) error {
 	select {
 	case <-done:
+		if b.aborted() {
+			// guarantee that all blocking goroutines return ErrBarrierAborted if
+			// barrier was aborted
+			return ErrBarrierAborted
+		}
 		return nil
 	case <-b.abort:
 		return ErrBarrierAborted
