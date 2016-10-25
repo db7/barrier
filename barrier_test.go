@@ -88,6 +88,7 @@ func TestBarrier_abortDuringLast(t *testing.T) {
 	last := make(chan bool)               // last goroutine in the barrier
 	wait := make(chan bool)               // block all goroutines
 	someError := fmt.Errorf("some error") // error of callback
+	var errCount int64
 
 	wg.Add(n)
 	for j := 0; j < n; j++ {
@@ -110,7 +111,11 @@ func TestBarrier_abortDuringLast(t *testing.T) {
 				return someError
 			})
 			ensure.NotNil(t, err)
-			ensure.True(t, err == barrier.ErrBarrierAborted || err == someError)
+			if err == someError {
+				atomic.AddInt64(&errCount, 1)
+			} else {
+				ensure.True(t, err == barrier.ErrBarrierAborted)
+			}
 		}()
 	}
 	<-last // wait for last goroutine, then abort
@@ -128,6 +133,8 @@ func TestBarrier_abortDuringLast(t *testing.T) {
 		}()
 	}
 	wg.Wait()
+
+	ensure.True(t, atomic.LoadInt64(&errCount) == 1)
 }
 
 // n+1 goroutines call Await() concurrently
@@ -140,6 +147,7 @@ func TestBarrier_toomany(t *testing.T) {
 	wait := make(chan bool)               // block all goroutines
 	another := make(chan bool)            // another goroutine (n+1)
 	someError := fmt.Errorf("some error") // error of callback
+	var errCount int64
 
 	wg.Add(n + 1)
 	for j := 0; j < n; j++ {
@@ -151,7 +159,11 @@ func TestBarrier_toomany(t *testing.T) {
 				return someError
 			})
 			ensure.NotNil(t, err)
-			ensure.True(t, err == barrier.ErrBarrierAborted || err == someError)
+			if err == someError {
+				atomic.AddInt64(&errCount, 1)
+			} else {
+				ensure.True(t, err == barrier.ErrBarrierAborted)
+			}
 		}()
 	}
 	<-last // wait for last gorouting
@@ -166,6 +178,8 @@ func TestBarrier_toomany(t *testing.T) {
 
 	close(wait) // release n initial goroutines
 	wg.Wait()
+
+	ensure.True(t, atomic.LoadInt64(&errCount) == 1)
 }
 
 func ExampleBarrier_simple() {
