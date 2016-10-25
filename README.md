@@ -23,4 +23,4 @@ one does not have to implement a goroutine-bound sense variable.
 ### Alternatives
 
 A simpler version, also using channels and a mutex, can be found
-[here](http://www.gofragments.net/client/blog/concurrency/2015/11/09/cyclicBarrierMutexChan).
+[here](http://www.gofragments.net/client/blog/concurrency/2015/11/09/cyclicBarrierMutexChan/index.html).
