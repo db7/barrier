@@ -48,7 +48,9 @@ func (b *Barrier) Abort() {
 // the last goroutine calling Await. Await returns any error the callback
 // returns to one goroutine; if Abort() is called, ErrBarrierAborted is
 // returned. The number of goroutines call Await should always match the value
-// n passed in the barrier's initialization.
+// n passed in the barrier's initialization. If the barrier detects that
+// Await() was concurrently called more than n times, the barrier is aborted
+// and the Await() may return ErrBarrierMisused.
 func (b *Barrier) Await(cb Callback) error {
 	if b.aborted() {
 		return ErrBarrierAborted
